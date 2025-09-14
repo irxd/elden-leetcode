@@ -15,7 +15,7 @@
         "48": "assets/elden-leetcode-48.png",
         "128": "assets/elden-leetcode-128.png"
     },
-    "permissions": ["webRequest", "tabs", "storage"],
+    "permissions": ["webRequest", "tabs", "scripting"],
     "host_permissions": ["https://leetcode.com/*"],
     "background": {
         "service_worker": "background.js"
