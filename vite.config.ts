@@ -9,7 +9,7 @@ export default defineConfig({
     build: {
         minify: false,
         lib: {
-            name: 'Elden GitHub',
+            name: 'Elden Leetcode',
             entry: {
                 background: resolve(__dirname, 'src/background.ts'),
                 content: resolve(__dirname, 'src/content.ts')

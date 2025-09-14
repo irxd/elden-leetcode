@@ -1,30 +1,30 @@
 {
-    "name": "Elden GitHub",
-    "description": "Elden Ring experience for GitHub",
+    "name": "Elden Leetcode",
+    "description": "Elden Ring experience for Leetcode",
     "version": "1.0",
     "manifest_version": 3,
     "action": {
         "default_icon": {
-            "16": "assets/elden-github-16.png",
-            "24": "assets/elden-github-24.png",
-            "32": "assets/elden-github-32.png"
+            "16": "assets/elden-leetcode-16.png",
+            "24": "assets/elden-leetcode-24.png",
+            "32": "assets/elden-leetcode-32.png"
         },
         "default_title": "My Extension Popup",
         "default_popup": "popup.html"
     },
     "icons": {
-        "16": "assets/elden-github-16.png",
-        "48": "assets/elden-github-48.png",
-        "128": "assets/elden-github-128.png"
+        "16": "assets/elden-leetcode-16.png",
+        "48": "assets/elden-leetcode-48.png",
+        "128": "assets/elden-leetcode-128.png"
     },
     "permissions": ["webRequest", "webRequestBlocking", "tabs", "storage"],
-    "host_permissions": ["https://github.com/*"],
+    "host_permissions": ["https://leetcode.com/*"],
     "background": {
         "service_worker": "background.js"
     },
     "content_scripts": [
         {
-            "matches": ["https://github.com/*"],
+            "matches": ["https://leetcode.com/*"],
             "js": ["content.js"],
             "run_at": "document_idle"
         }
