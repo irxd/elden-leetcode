@@ -2,4 +2,4 @@
 
 Elden Ring experience for Leetcode
 
-![Pull request made](https://github.com/user-attachments/assets/b90c43c5-b058-4aa1-9621-193bdace400b)
+![Submission Accepted](https://github.com/user-attachments/assets/baec03b9-eadd-4388-a2c4-c1ce9b52c405)
