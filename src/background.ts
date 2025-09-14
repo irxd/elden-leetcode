@@ -237,10 +237,24 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
 
         let action: Actions | null = null;
         
-        if (status === 'SUCCESS' && (statusCode === 10 || statusDisplay === 'Accepted')) {
-            action = 'submissionAccepted';
-        } else if (status === 'SUCCESS') {
-            action = 'submissionRejected';
+        if (status === 'SUCCESS') {
+            if (statusCode === 10 || statusDisplay === 'Accepted') {
+                action = 'submissionAccepted';
+            } else if (statusCode === 15 || statusDisplay === 'Runtime Error') {
+                action = 'submissionRuntimeError';
+            } else {
+                action = 'submissionRejected';
+            }
+        }
+
+        if (action) {
+            const pending = pendingSubmissions.get(tabId);
+            if (pending && !pending.hasDispatched) {
+                console.log(`Determined final action: ${action} for state: ${status}`);
+                pending.hasDispatched = true;
+                dispatch(action, { url: '', method: 'POST', tabId });
+                pendingSubmissions.set(tabId, pending);
+            }
         } else {
             console.log('Submission still pending, state:', status, 'display:', statusDisplay);
             
@@ -257,17 +271,6 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
                     console.log('Max retries reached for submission check.');
                     pendingSubmissions.delete(tabId);
                 }
-            }
-            return; 
-        }
-
-        if (action) {
-            const pending = pendingSubmissions.get(tabId);
-            if (pending && !pending.hasDispatched) {
-                console.log(`Determined final action: ${action} for state: ${status}`);
-                pending.hasDispatched = true;
-                dispatch(action, { url: '', method: 'POST', tabId });
-                pendingSubmissions.set(tabId, pending);
             }
         }
         

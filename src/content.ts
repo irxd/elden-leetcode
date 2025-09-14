@@ -1,6 +1,7 @@
 const banners = {
     submissionAccepted: 'banners/submission-accepted.webp',
-    submissionRejected: 'banners/submission-rejected.webp'
+    submissionRejected: 'banners/submission-rejected.webp',
+    submissionRuntimeError: 'banners/submission-runtime-error.webp'
 } as const;
 
 export type Actions = keyof typeof banners
@@ -12,7 +13,8 @@ const sounds = {
 
 const bannerSounds: Record<keyof typeof banners, keyof typeof sounds> = {
     submissionAccepted: 'victory',
-    submissionRejected: 'youDied'
+    submissionRejected: 'youDied',
+    submissionRuntimeError: 'youDied'
 } as const;
 
 const animations = {
@@ -25,7 +27,8 @@ const animations = {
 
 const delays = {
     submissionAccepted: 0,
-    submissionRejected: 1000
+    submissionRejected: 0,
+    submissionRuntimeError: 0
 } as const satisfies Partial<{ [delay in Actions]: number }>
 
 console.log('LeetCode Banner Extension - Content script loaded on:', window.location.href);
