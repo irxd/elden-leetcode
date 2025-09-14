@@ -92,7 +92,7 @@ function show(
     banner.style.zIndex = '99999';
     banner.style.width = '100%';
     banner.style.height = '100vh';
-    banner.style.objectFit = 'cover';
+    banner.style.objectFit = window.innerWidth < window.innerHeight ? 'contain' : 'cover';
     banner.style.objectPosition = 'center';
     banner.style.opacity = '0';
     banner.style.pointerEvents = 'none';
