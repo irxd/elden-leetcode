@@ -210,6 +210,11 @@ const matchLeetCodeGraphQL = (detail: WebRequestDetails, operationName: string):
 
 async function fetchSubmissionResult(submissionId: string, tabId: number): Promise<void> {
     try {
+        const pending = pendingSubmissions.get(tabId);
+        if (pending?.hasDispatched) {
+            return;
+        }
+
         const url = `https://leetcode.com/submissions/detail/${submissionId}/check/`;
         console.log(`Polling submission result from: ${url}`);
         
@@ -257,9 +262,13 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
         }
 
         if (action) {
-            console.log(`Determined final action: ${action} for state: ${status}`);
-            dispatch(action, { url: '', method: 'POST', tabId });
-            pendingSubmissions.delete(tabId);
+            const pending = pendingSubmissions.get(tabId);
+            if (pending && !pending.hasDispatched) {
+                console.log(`Determined final action: ${action} for state: ${status}`);
+                pending.hasDispatched = true;
+                dispatch(action, { url: '', method: 'POST', tabId });
+                pendingSubmissions.set(tabId, pending);
+            }
         }
         
     } catch (error) {
@@ -292,7 +301,7 @@ chrome.webRequest.onBeforeRequest.addListener(
             
             if (matchLeetCodeGraphQL(detail, 'submitCode')) {
                 console.log('Submission detected!');
-                pendingSubmissions.set(detail.tabId, { timestamp: Date.now(), retryCount: 0 });
+                pendingSubmissions.set(detail.tabId, { timestamp: Date.now(), retryCount: 0, hasDispatched: false });
                 return;
             }
         }

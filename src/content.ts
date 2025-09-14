@@ -28,8 +28,6 @@ const delays = {
     submissionRejected: 1000
 } as const satisfies Partial<{ [delay in Actions]: number }>
 
-let isShowingBanner = false;
-
 console.log('LeetCode Banner Extension - Content script loaded on:', window.location.href);
 
 if (document.readyState === 'loading') {
@@ -78,13 +76,6 @@ function show(
         console.error(`Invalid action: ${action}`);
         return;
     }
-
-     if (isShowingBanner) {
-        console.log('Banner already showing, ignoring duplicate request');
-        return;
-    }
-
-    isShowingBanner = true;
 
     console.log('Creating banner element...');
     const banner = document.createElement('img');
