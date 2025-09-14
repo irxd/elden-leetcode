@@ -8,16 +8,14 @@
             "16": "assets/elden-leetcode-16.png",
             "24": "assets/elden-leetcode-24.png",
             "32": "assets/elden-leetcode-32.png"
-        },
-        "default_title": "My Extension Popup",
-        "default_popup": "popup.html"
+        }
     },
     "icons": {
         "16": "assets/elden-leetcode-16.png",
         "48": "assets/elden-leetcode-48.png",
         "128": "assets/elden-leetcode-128.png"
     },
-    "permissions": ["webRequest", "webRequestBlocking", "tabs", "storage"],
+    "permissions": ["webRequest", "tabs", "storage"],
     "host_permissions": ["https://leetcode.com/*"],
     "background": {
         "service_worker": "background.js"
