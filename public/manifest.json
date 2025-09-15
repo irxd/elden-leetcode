@@ -1,7 +1,7 @@
 {
     "name": "Elden Leetcode",
     "description": "Elden Ring experience for Leetcode",
-    "version": "1.0",
+    "version": "1.0.1",
     "manifest_version": 3,
     "action": {
         "default_icon": {
