@@ -2,6 +2,8 @@ const banners = {
     submissionAccepted: 'banners/submission-accepted.webp',
     submissionRejected: 'banners/submission-rejected.webp',
     submissionRuntimeError: 'banners/submission-runtime-error.webp',
+    submissionMemoryLimit: 'banners/submission-memory-limit.webp',
+    submissionTimeLimit: 'banners/submission-time-limit.webp',
     dailyCheckin: 'banners/daily-checkin.webp'
 } as const;
 
@@ -17,6 +19,8 @@ const bannerSounds: Record<keyof typeof banners, keyof typeof sounds> = {
     submissionAccepted: 'victory',
     submissionRejected: 'youDied',
     submissionRuntimeError: 'youDied',
+    submissionMemoryLimit: 'youDied',
+    submissionTimeLimit: 'youDied',
     dailyCheckin: 'newItem'
 } as const;
 
@@ -34,8 +38,6 @@ const delays = {
     submissionRuntimeError: 0
 } as const satisfies Partial<{ [delay in Actions]: number }>
 
-console.log('LeetCode Banner Extension - Content script loaded on:', window.location.href);
-
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeExtension);
 } else {
@@ -51,15 +53,11 @@ chrome.runtime.onMessage.addListener((
     _sender: unknown, 
     sendResponse: (response?: any) => void
 ) => {
-    console.log('Message received in content script:', message);
-    
     if (!message?.action) {
-        console.log('No action in message');
         sendResponse({ received: false, error: 'No action provided' });
         return false;
     }
 
-    console.log(`Showing banner for action: ${message.action}`);
     try {
         show(message.action);
         sendResponse({ received: true, action: message.action });
@@ -75,18 +73,14 @@ chrome.runtime.onMessage.addListener((
 function show(
     action: Actions,
     delay = delays[action as keyof typeof delays] ?? 1000
-) {
-    console.log(`show() called with action: ${action}, delay: ${delay}`);
-    
+) {    
     if (action in banners === false) {
         console.error(`Invalid action: ${action}`);
         return;
     }
 
-    console.log('Creating banner element...');
     const banner = document.createElement('img');
     const bannerSrc = chrome.runtime.getURL(banners[action]);
-    console.log('Banner source URL:', bannerSrc);
     
     banner.src = bannerSrc;
     banner.style.position = 'fixed';
@@ -123,23 +117,13 @@ function show(
         }, 3000);
     };
 
-    banner.onload = () => {
-        console.log('Banner image loaded successfully');
-    };
-
     const soundSrc = chrome.runtime.getURL(sounds[bannerSounds[action]]);
-    console.log('Sound source URL:', soundSrc);
     
     const audio = new Audio(soundSrc);
     audio.volume = 0.25;
-
-    console.log(`Setting timeout for ${delay}ms before showing banner`);
     
-    setTimeout(() => {
-        console.log('Showing banner now...');
-        
+    setTimeout(() => {  
         requestAnimationFrame(() => {
-            console.log('Appending banner to body');
             document.body.appendChild(banner);
 
             banner.animate([{ opacity: 0 }, { opacity: 1 }], {
@@ -149,13 +133,12 @@ function show(
             });
 
             audio.play().catch((error) => {
-                console.log('Could not play sound:', error);
+                console.error('Could not play sound:', error);
             });
         });
     }, delay);
 
     setTimeout(() => {
-        console.log('Starting banner fade out...');
         
         banner.animate([{ opacity: 1 }, { opacity: 0 }], {
             duration: animations.duration,
@@ -164,7 +147,6 @@ function show(
         });
 
         setTimeout(() => {
-            console.log('Removing banner from DOM');
             banner.remove();
         }, animations.duration);
     }, animations.span + delay);

@@ -62,11 +62,16 @@ const pendingSubmissions = new Map<number, {
     hasDispatched?: boolean 
 }>();
 
+const code = {
+    ACCEPTED: 10,
+    RUNTIME_ERROR: 15,
+    MEMORY_LIMIT_EXCEEDED: 12,
+    TIME_LIMIT_EXCEEDED: 14
+}
+
 async function dispatch(action: Actions, details: WebRequestDetails): Promise<void> {
     const tabId = details.tabId;
     if (typeof tabId !== 'number' || !tabId) return;
-
-    console.log(`Dispatching action: ${action} to tab: ${tabId}`);
     
     try {
         const tab = await new Promise<chrome.tabs.Tab | undefined>((resolve) => {
@@ -81,26 +86,23 @@ async function dispatch(action: Actions, details: WebRequestDetails): Promise<vo
         });
 
         if (!tab || !tab.active) {
-            console.log(`Tab ${tabId} is not active or no longer exists`);
+            console.error(`Tab ${tabId} is not active or no longer exists`);
             return;
         }
 
         const sendMessage = (retryCount = 0) => {
             try {
-                chrome.tabs.sendMessage(tabId, { action }, (response) => {
+                chrome.tabs.sendMessage(tabId, { action }, () => {
                     if (chrome.runtime.lastError) {
                         console.error('Error sending message:', chrome.runtime.lastError);
                         
                         if (retryCount < 2) { 
                             const delay = Math.pow(2, retryCount) * 1000;
-                            console.log(`Retrying in ${delay}ms... (attempt ${retryCount + 1}/2)`);
                             setTimeout(() => sendMessage(retryCount + 1), delay);
                         } else {
                             console.error('Max retries reached for tab', tabId);
                             injectContentScript(tabId, action);
                         }
-                    } else if (response) {
-                        console.log('Received response:', response);
                     }
                 });
             } catch (error) {
@@ -134,8 +136,6 @@ async function injectContentScript(tabId: number, action: Actions) {
         chrome.tabs.sendMessage(tabId, { action }, () => {
             if (chrome.runtime.lastError) {
                 console.error('Still failed to send message after injection:', chrome.runtime.lastError);
-            } else {
-                console.log('Message sent successfully after script injection');
             }
         });
     } catch (error) {
@@ -144,10 +144,7 @@ async function injectContentScript(tabId: number, action: Actions) {
         try {
             await new Promise<void>((resolve, reject) => {
                 chrome.scripting.executeScript({
-                    target: { tabId },
-                    func: () => {
-                        console.log('Content script injected via fallback');
-                    }
+                    target: { tabId }
                 }, () => {
                     if (chrome.runtime.lastError) {
                         reject(chrome.runtime.lastError);
@@ -160,8 +157,6 @@ async function injectContentScript(tabId: number, action: Actions) {
             chrome.tabs.sendMessage(tabId, { action }, () => {
                 if (chrome.runtime.lastError) {
                     console.error('Still failed after fallback injection:', chrome.runtime.lastError);
-                } else {
-                    console.log('Message sent successfully after fallback injection');
                 }
             });
         } catch (fallbackError) {
@@ -216,7 +211,6 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
         }
 
         const url = `https://leetcode.com/submissions/detail/${submissionId}/check/`;
-        console.log(`Polling submission result from: ${url}`);
         
         const response = await fetch(url, {
             credentials: 'include',
@@ -229,19 +223,20 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
         }
         
         const data = await response.json();
-        console.log('Submission result data:', data);
-        
-        const status = data.state; 
-        const statusDisplay = data.status_display || '';
+        const status = data.state;
         const statusCode = data.status_code;
 
         let action: Actions | null = null;
         
         if (status === 'SUCCESS') {
-            if (statusCode === 10 || statusDisplay === 'Accepted') {
+            if (statusCode === code.ACCEPTED) {
                 action = 'submissionAccepted';
-            } else if (statusCode === 15 || statusDisplay === 'Runtime Error') {
+            } else if (statusCode === code.RUNTIME_ERROR) {
                 action = 'submissionRuntimeError';
+            } else if (statusCode === code.MEMORY_LIMIT_EXCEEDED) {
+                action = 'submissionMemoryLimit';
+            } else if (statusCode === code.TIME_LIMIT_EXCEEDED) {
+                action = 'submissionTimeLimit';
             } else {
                 action = 'submissionRejected';
             }
@@ -250,25 +245,21 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
         if (action) {
             const pending = pendingSubmissions.get(tabId);
             if (pending && !pending.hasDispatched) {
-                console.log(`Determined final action: ${action} for state: ${status}`);
                 pending.hasDispatched = true;
                 dispatch(action, { url: '', method: 'POST', tabId });
                 pendingSubmissions.set(tabId, pending);
             }
         } else {
-            console.log('Submission still pending, state:', status, 'display:', statusDisplay);
-            
             const pending = pendingSubmissions.get(tabId);
             if (pending) {
                 const retryCount = (pending.retryCount || 0) + 1;
-                if (retryCount < 15) { 
+                if (retryCount < 30) { 
                     pending.retryCount = retryCount;
                     pendingSubmissions.set(tabId, pending);
                     
                     const delay = Math.min(retryCount * 1000, 5000); 
                     setTimeout(() => fetchSubmissionResult(submissionId, tabId), delay);
                 } else {
-                    console.log('Max retries reached for submission check.');
                     pendingSubmissions.delete(tabId);
                 }
             }
@@ -295,21 +286,14 @@ function extractSubmissionId(url: string): string | null {
 }
 
 chrome.webRequest.onBeforeRequest.addListener(
-    (detail: WebRequestDetails) => {
-        console.log('Request intercepted:', detail.url, detail.method);
-        
-        if (detail.url === 'https://leetcode.com/graphql') {
-            const body = readBody(detail);
-            console.log('GraphQL request body:', body);
-            
+    (detail: WebRequestDetails) => {        
+        if (detail.url === 'https://leetcode.com/graphql') {   
             if (matchLeetCodeGraphQL(detail, 'submitCode')) {
-                console.log('Submission detected!');
                 pendingSubmissions.set(detail.tabId, { timestamp: Date.now(), retryCount: 0, hasDispatched: false });
                 return;
             }
 
             if (matchLeetCodeGraphQL(detail, 'checkin')) {
-                console.log('Daily checkin detected!');
                 dispatch('dailyCheckin', detail);
                 return;
             }
@@ -317,7 +301,6 @@ chrome.webRequest.onBeforeRequest.addListener(
         
         if (detail.url.includes('leetcode.com') && detail.url.includes('submit') && 
             detail.method === 'POST' && !detail.url.includes('/check/')) {
-            console.log('Direct submission URL detected:', detail.url);
             pendingSubmissions.set(detail.tabId, { timestamp: Date.now(), retryCount: 0, hasDispatched: false });
             return;
         }
@@ -328,13 +311,9 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onCompleted.addListener(
     (detail: WebRequestDetails) => {
-        console.log('Request completed:', detail.url);
-        
         if (detail.url.includes('leetcode.com/submissions/detail/') && detail.url.includes('/check/')) {
             const submissionId = extractSubmissionId(detail.url);
             if (submissionId && pendingSubmissions.has(detail.tabId)) {
-                console.log(`Submission status check completed for ID: ${submissionId}`);
-                
                 const pending = pendingSubmissions.get(detail.tabId);
                 if (pending) {
                     pending.submissionId = submissionId;
@@ -355,9 +334,7 @@ chrome.webRequest.onBeforeResponse?.addListener(
     (detail: WebRequestDetails) => {
         if (detail.url.includes('leetcode.com/submissions/detail/') && detail.url.includes('/check/')) {
             const submissionId = extractSubmissionId(detail.url);
-            if (submissionId && pendingSubmissions.has(detail.tabId)) {
-                console.log(`Got response for submission check: ${submissionId}`);
-                
+            if (submissionId && pendingSubmissions.has(detail.tabId)) {                
                 setTimeout(() => {
                     chrome.scripting.executeScript({
                         target: { tabId: detail.tabId },
@@ -366,10 +343,6 @@ chrome.webRequest.onBeforeResponse?.addListener(
                                 url: window.location.href,
                                 body: document.body.textContent
                             };
-                        }
-                    }, (results) => {
-                        if (results && results[0]) {
-                            console.log('Page content:', results[0]);
                         }
                     });
                 }, 500);
