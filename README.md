@@ -2,6 +2,8 @@
 
 Elden Ring experience for Leetcode
 
+Download on [chrome web store](https://chromewebstore.google.com/detail/elden-leetcode/nnaomgihamimombjjofcbhhmbidebjnb)
+
 ![Submission Accepted](https://github.com/user-attachments/assets/baec03b9-eadd-4388-a2c4-c1ce9b52c405)
 
 ## Installation
