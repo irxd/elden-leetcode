@@ -19,6 +19,15 @@ Elden Ring experience for Leetcode
 5. Enable Developer mode
 6. Click "Load unpacked" and select dist directory
 
+## Actions Implemented
+
+-   Submission Accepted
+-   Submission Rejected
+-   Submission Runtime Error
+-   Submission Memory Limit
+-   Submission Time Limit
+-   Daily Checkin
+
 ## Credits
 
 -   [SaltyAom](https://github.com/SaltyAom) for initial idea
