@@ -307,6 +307,12 @@ chrome.webRequest.onBeforeRequest.addListener(
                 pendingSubmissions.set(detail.tabId, { timestamp: Date.now(), retryCount: 0, hasDispatched: false });
                 return;
             }
+
+            if (matchLeetCodeGraphQL(detail, 'checkin')) {
+                console.log('Daily checkin detected!');
+                dispatch('dailyCheckin', detail);
+                return;
+            }
         }
         
         if (detail.url.includes('leetcode.com') && detail.url.includes('submit') && 

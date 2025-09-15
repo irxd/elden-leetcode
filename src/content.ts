@@ -1,20 +1,23 @@
 const banners = {
     submissionAccepted: 'banners/submission-accepted.webp',
     submissionRejected: 'banners/submission-rejected.webp',
-    submissionRuntimeError: 'banners/submission-runtime-error.webp'
+    submissionRuntimeError: 'banners/submission-runtime-error.webp',
+    dailyCheckin: 'banners/daily-checkin.webp'
 } as const;
 
 export type Actions = keyof typeof banners
 
 const sounds = {
     victory: 'sounds/victory.mp3',
-    youDied: 'sounds/you-died.mp3'
+    youDied: 'sounds/you-died.mp3',
+    newItem: 'sounds/new-item.mp3'
 } as const
 
 const bannerSounds: Record<keyof typeof banners, keyof typeof sounds> = {
     submissionAccepted: 'victory',
     submissionRejected: 'youDied',
-    submissionRuntimeError: 'youDied'
+    submissionRuntimeError: 'youDied',
+    dailyCheckin: 'newItem'
 } as const;
 
 const animations = {
