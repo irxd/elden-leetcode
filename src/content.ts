@@ -4,6 +4,7 @@ const banners = {
     submissionRuntimeError: 'banners/submission-runtime-error.webp',
     submissionMemoryLimit: 'banners/submission-memory-limit.webp',
     submissionTimeLimit: 'banners/submission-time-limit.webp',
+    submissionCompileError: 'banners/submission-compile-error.webp',
     dailyCheckin: 'banners/daily-checkin.webp'
 } as const;
 
@@ -21,6 +22,7 @@ const bannerSounds: Record<keyof typeof banners, keyof typeof sounds> = {
     submissionRuntimeError: 'youDied',
     submissionMemoryLimit: 'youDied',
     submissionTimeLimit: 'youDied',
+    submissionCompileError: 'youDied',
     dailyCheckin: 'newItem'
 } as const;
 

@@ -66,7 +66,8 @@ const code = {
     ACCEPTED: 10,
     RUNTIME_ERROR: 15,
     MEMORY_LIMIT_EXCEEDED: 12,
-    TIME_LIMIT_EXCEEDED: 14
+    TIME_LIMIT_EXCEEDED: 14,
+    COMPILE_ERROR: 20
 }
 
 async function dispatch(action: Actions, details: WebRequestDetails): Promise<void> {
@@ -237,6 +238,8 @@ async function fetchSubmissionResult(submissionId: string, tabId: number): Promi
                 action = 'submissionMemoryLimit';
             } else if (statusCode === code.TIME_LIMIT_EXCEEDED) {
                 action = 'submissionTimeLimit';
+            } else if (statusCode === code.COMPILE_ERROR) {
+                action = 'submissionCompileError';
             } else {
                 action = 'submissionRejected';
             }
